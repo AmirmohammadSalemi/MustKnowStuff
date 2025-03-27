@@ -1,0 +1,136 @@
+FetchType Overview
+
+There are two types of fetching strategies in JPA:
+
+FetchType.LAZY (Lazy Loading)
+FetchType.EAGER (Eager Loading)
+1. FetchType.LAZY (Lazy Loading)
+Lazy Loading means that the related data is not fetched immediately when the parent entity is loaded. Instead, it is fetched on demand, i.e., when the related data is explicitly accessed.
+This is the default fetching strategy for most relationships (e.g., @OneToMany and @ManyToMany).
+Example:
+java
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<Order> orders; // Lazy fetching
+}
+
+Explanation:
+When you load a User entity, the orders associated with the User will not be fetched immediately.
+The orders will be fetched only when you explicitly access the orders field in your code.
+Advantages:
+Performance Optimization: Reduces the initial query load by deferring the fetching of related data until it’s actually needed.
+Lower Memory Usage: Only loads what is required.
+Disadvantages:
+LazyInitializationException: If you access the lazy-loaded field outside of the persistence context (e.g., after closing the session), Hibernate will throw an exception because it cannot fetch the data.
+2. FetchType.EAGER (Eager Loading)
+Eager Loading means that the related data is fetched immediately along with the parent entity, regardless of whether you use it or not.
+This is the default fetching strategy for relationships like @ManyToOne and @OneToOne.
+Example:
+java
+@Entity
+public class Order {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String productName;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    private User user; // Eager fetching
+}
+
+Explanation:
+When you load an Order entity, the associated User entity will be fetched immediately, even if you don’t explicitly access the user field in your code.
+Advantages:
+Convenience: No additional database queries are required to fetch the related data.
+No LazyInitializationException: The related data is always available.
+Disadvantages:
+Performance Impact: Fetching all related data upfront can increase the query load and slow down the application if the related data is large or unnecessary.
+Higher Memory Usage: Loads related entities that may not be used.
+When to Use FetchType.LAZY vs. FetchType.EAGER
+Use FetchType.LAZY:
+When the related data is large or seldom used.
+When you want to optimize performance by loading related data only when necessary.
+Typically used for relationships like @OneToMany and @ManyToMany.
+Use FetchType.EAGER:
+When the related data is small and frequently used.
+When you need the related data immediately along with the parent entity.
+Typically used for relationships like @OneToOne and @ManyToOne.
+Customizing FetchType in Relationships
+
+You can explicitly set the FetchType in your JPA annotations. For example:
+
+java
+@OneToMany(fetch = FetchType.LAZY)
+private List<Order> orders;
+
+@ManyToOne(fetch = FetchType.EAGER)
+private User user;
+
+Key Points to Remember
+
+Default FetchTypes:
+
+@OneToMany and @ManyToMany: Default is FetchType.LAZY.
+@ManyToOne and @OneToOne: Default is FetchType.EAGER.
+
+Lazy Loading Requires the Persistence Context:
+
+Lazy-loaded data can only be accessed within an active Hibernate session. Accessing it outside the session will lead to LazyInitializationException.
+
+Eager Loading Can Be Overkill:
+
+Fetching unnecessary data upfront can slow down your application, especially when dealing with large datasets.
+Example to Demonstrate FetchType
+Entities:
+java
+@Entity
+public class Author {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+
+    @OneToMany(mappedBy = "author", fetch = FetchType.LAZY)
+    private List<Book> books; // Lazy fetching
+}
+
+@Entity
+public class Book {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String title;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    private Author author; // Eager fetching
+}
+
+Loading Data:
+java
+public void fetchData(EntityManager entityManager) {
+    // Fetching Author (Lazy relationship)
+    Author author = entityManager.find(Author.class, 1L);
+    System.out.println(author.getName());
+
+    // Accessing Lazy-loaded books (triggers additional query)
+    for (Book book : author.getBooks()) {
+        System.out.println(book.getTitle());
+    }
+
+    // Fetching Book (Eager relationship)
+    Book book = entityManager.find(Book.class, 1L);
+    System.out.println(book.getTitle());
+    System.out.println(book.getAuthor().getName()); // Author is already loaded
+}
+
+Output:
+Fetching Author will not fetch books initially.
+Fetching Book will immediately fetch the associated Author.

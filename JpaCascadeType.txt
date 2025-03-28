@@ -1,0 +1,90 @@
+In Java Persistence API (JPA), the cascade attribute is used in relationships between entities to specify how certain operations (like persist, merge, remove, etc.) should “cascade” from a parent entity to its related child entities. It simplifies managing related entities when performing database operations.
+
+What Is Cascade?
+Imagine you have two entities, Parent and Child, with a relationship (e.g., @OneToMany, @ManyToOne, etc.). Cascade allows you to propagate an operation performed on the parent entity to the child entities automatically, rather than manually handling each child.
+
+Cascade Types in JPA
+The cascade types are defined in javax.persistence.CascadeType enumeration. Here are the types and their effects:
+
+CascadeType.PERSIST
+
+When the parent entity is persisted (saved to the database), all its related child entities are also persisted automatically.
+Example: If you call entityManager.persist(parent), the Child entities will also be persisted if this cascade type is applied.
+java
+@OneToMany(cascade = CascadeType.PERSIST)
+private List<Child> children;
+CascadeType.MERGE
+
+When the parent entity is merged (updated in the database), all its related child entities are also merged automatically.
+Example: If you call entityManager.merge(parent), the Child entities will also be merged.
+java
+@OneToMany(cascade = CascadeType.MERGE)
+private List<Child> children;
+CascadeType.REMOVE
+
+When the parent entity is removed (deleted from the database), all its related child entities are also removed automatically.
+Example: If you call entityManager.remove(parent), the Child entities will also be removed.
+java
+@OneToMany(cascade = CascadeType.REMOVE)
+private List<Child> children;
+CascadeType.REFRESH
+
+When the parent entity is refreshed (reloaded from the database), all its related child entities are also refreshed automatically.
+Example: If you call entityManager.refresh(parent), the Child entities will also be refreshed.
+java
+@OneToMany(cascade = CascadeType.REFRESH)
+private List<Child> children;
+CascadeType.DETACH
+
+When the parent entity is detached (removed from the persistence context but not deleted from the database), all its related child entities are also detached automatically.
+Example: If you call entityManager.detach(parent), the Child entities will also be detached.
+java
+@OneToMany(cascade = CascadeType.DETACH)
+private List<Child> children;
+CascadeType.ALL
+
+This is a shorthand for applying all the above cascade types (PERSIST, MERGE, REMOVE, REFRESH, DETACH) to the relationship.
+Example: If you want all operations on the parent to cascade to the child entities, use CascadeType.ALL.
+java
+@OneToMany(cascade = CascadeType.ALL)
+private List<Child> children;
+How to Use Cascade?
+Cascade is typically applied in relationships such as:
+
+@OneToOne
+@OneToMany
+@ManyToOne
+@ManyToMany
+Example:
+java
+@Entity
+public class Parent {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "parent")
+    private List<Child> children = new ArrayList<>();
+}
+
+@Entity
+public class Child {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Parent parent;
+}
+In this example:
+
+If you persist a Parent entity, the associated Child entities will also be persisted automatically because of CascadeType.ALL.
+If you delete a Parent entity, the associated Child entities will be deleted.
+Why Use Cascade?
+Cascade simplifies entity management in JPA by automatically propagating operations to related entities. Without cascade, you would need to explicitly perform operations on each child entity, which can be cumbersome and error-prone.
+
+Important Considerations
+Use Cascade Carefully: Cascading operations like REMOVE can delete child entities unintentionally, so make sure this is what you actually want.
+Cascade and Orphan Removal: If you’re working with @OneToMany, you might also want to use orphanRemoval = true to automatically delete child entities that are removed from the parent collection.
+Performance: Cascading operations can lead to additional database queries, so consider the impact on performance.

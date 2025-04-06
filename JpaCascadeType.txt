@@ -88,3 +88,4 @@ Important Considerations
 Use Cascade Carefully: Cascading operations like REMOVE can delete child entities unintentionally, so make sure this is what you actually want.
 Cascade and Orphan Removal: If you’re working with @OneToMany, you might also want to use orphanRemoval = true to automatically delete child entities that are removed from the parent collection.
 Performance: Cascading operations can lead to additional database queries, so consider the impact on performance.
+yup
